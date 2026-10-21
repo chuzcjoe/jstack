@@ -19,7 +19,7 @@ J's standalone engineering workflow. The only playbook currently supported is **
 
 ## Subagents
 
-For delegated investigation, implementation, or verification, use the `j-agent` custom agent when it is registered with the host. Its role definition is maintained in `agents/j-agent.md` in the J Stack repository and installed in the host's custom-agent directory. It inherits the parent model and can run in the background.
+For delegated investigation, implementation, or verification, use the `j-agent` custom agent when it is registered with the host. Its shared instructions are maintained in `agents/j-agent.md` in the J Stack repository. `setup.sh` installs them in `.codex/agents/` with a TOML adapter for Codex, or `.claude/agents/` for Claude Code. The delegate inherits the parent's model settings unless the host configuration or invocation overrides them, and can run in the background.
 
 Each assignment must include the absolute path to this `SKILL.md`, the workspace, the bug and relevant evidence, the specific subtask and acceptance criteria, and whether edits are allowed. Give implementation delegates explicit file ownership. Use a fresh delegate for a new subtask; reuse one only when the assignment depends on its existing work or a process it still runs.
 

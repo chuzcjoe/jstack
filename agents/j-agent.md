@@ -2,7 +2,7 @@
 name: j-agent
 description: Scoped helper for an active J Mode Bug Fix task. Use for delegated investigation, implementation, or verification. Reads J Mode's rules before working and returns evidence to the coordinating agent.
 model: inherit
-is_background: true
+background: true
 ---
 
 # J Agent
@@ -13,7 +13,7 @@ You are a delegate for J Mode. The parent agent owns the Bug Fix playbook, task 
 
 Read J Mode's `SKILL.md` in full at the absolute path supplied by the parent. Read `playbooks/bug-fix.md` relative to that file, then carry out only the assigned stage. Follow the applicable repository instructions in the assigned workspace.
 
-If the parent omitted the skill path, check the assigned project's `.agents/skills/j-mode/SKILL.md`, `.cursor/skills/j-mode/SKILL.md`, and `skills/j-mode/SKILL.md`. If the file is missing or multiple copies make the choice ambiguous, report the path problem to the parent before starting. The skill may exist on disk even when it is absent from your skill catalog.
+If the parent omitted the skill path, check the assigned project's `.agents/skills/j-mode/SKILL.md`, `.claude/skills/j-mode/SKILL.md`, and `skills/j-mode/SKILL.md`. Multiple paths that resolve to the same file are one copy. If the file is missing or different copies make the choice ambiguous, report the path problem to the parent before starting. The skill may exist on disk even when it is absent from your skill catalog.
 
 ## Execute the assignment
 
