@@ -13,9 +13,19 @@ J's standalone engineering workflow. The only playbook currently supported is **
 - Prefer the smallest change supported by evidence. Reuse existing project structures and keep unrelated cleanup out of the fix.
 - Distinguish observations from hypotheses. Fix the source of incorrect behavior; add a guard only when the state it handles is legitimate.
 - Verify observable behavior. Compilation, linting, and another agent's report alone do not establish that the reported problem is solved.
-- Work directly by default. Use delegation only when it is available, authorized, and useful. No specific model or agent type is required.
+- Work directly by default. Use delegation only when it is available, authorized, and useful, following the Subagents section below.
 - Keep work within the user's request and existing authorization. This mode does not itself authorize commits, PRs, merges, deployment, or messages to other people.
 - Reply in the user's language. State what changed, why, the actual verification result, and any unresolved limit. Label inference and uncertainty. Cite only artifacts you inspected or produced.
+
+## Subagents
+
+For delegated investigation, implementation, or verification, use the `j-agent` custom agent when it is registered with the host. Its role definition is maintained in `agents/j-agent.md` in the J Stack repository and installed in the host's custom-agent directory. It inherits the parent model and can run in the background.
+
+Each assignment must include the absolute path to this `SKILL.md`, the workspace, the bug and relevant evidence, the specific subtask and acceptance criteria, and whether edits are allowed. Give implementation delegates explicit file ownership. Use a fresh delegate for a new subtask; reuse one only when the assignment depends on its existing work or a process it still runs.
+
+Keep the full playbook, task list, and final response in the parent conversation. Parallelize independent investigations when useful, and serialize edits to overlapping files. Review delegated changes and rerun the original reproduction yourself before reporting a verified fix.
+
+If the host supports generic delegates but no registered `j-agent`, locate the installed `j-agent.md` and pass its absolute path with an instruction to read it before working. If the role file or delegation tools are unavailable, complete the task directly. Delegates must not spawn further agents.
 
 ## Bug Fix
 

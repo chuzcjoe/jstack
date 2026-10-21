@@ -4,6 +4,8 @@ Adapted from P Stack's Bug Fix playbook for a standalone workflow.
 
 Every change should follow from evidence about the reported failure. A speculative safeguard is a hypothesis to test, rather than an automatic part of the fix.
 
+When delegation is useful, follow J Mode's Subagents section to assign a bounded investigation, implementation, or verification task to `j-agent`. The coordinating agent still owns the original reproduction, review of the fix, and final verification.
+
 ## 1. Reproduce the failure
 
 Establish the expected behavior and the actual failure. Run the reproduction yourself on the surface where the bug occurs, such as the browser, CLI, API, or application runtime. Record the command or actions, relevant input and environment, and the observed failure.
