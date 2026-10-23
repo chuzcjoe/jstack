@@ -1,8 +1,8 @@
 # J Stack
 
-A minimal engineering workflow adapted from [P Stack](https://github.com/cursor/plugins/tree/main/pstack). J Stack currently includes one skill, **J Mode**, with a single **Bug Fix** playbook.
+A minimal engineering workflow built around **J Mode**, with playbooks for **Bug Fix**, **Feature**, **Investigation**, and **Refactor**.
 
-J Mode works independently and requires no additional P Stack skills or specific models. An optional **J Agent** can handle delegated investigation, implementation, or verification tasks.
+J Mode requires no additional workflow skills or specific models. By default, the main agent coordinates the work: it assigns bounded tasks to subagents, collects their results, and summarizes the outcome. Subagents perform investigation, design, implementation, testing, review, and verification.
 
 ## Install as a Submodule
 
@@ -66,21 +66,42 @@ The list should show an empty state. Reproduce the failure, identify the root
 cause, apply the smallest fix, and verify the result.
 ```
 
-## Optional Delegation
+J Mode selects a playbook from the requested outcome. You can also name one explicitly:
 
-[`agents/j-agent.md`](agents/j-agent.md) defines J Mode's shared delegate instructions, adapted from P Stack's [Poteto Agent](https://github.com/cursor/plugins/blob/main/pstack/agents/poteto-agent.md). Claude Code loads that Markdown definition directly. Codex loads [`agents/j-agent.toml`](agents/j-agent.toml), which tells the delegate to read the shared instructions. Model selection follows the host's inherited settings and any explicit overrides.
+```text
+$j-mode Feature: add filtering by status to the records list.
+$j-mode Investigate: explain how login sessions expire, without changing code.
+$j-mode Refactor: simplify the session store while preserving its behavior.
+```
 
-Ask J Mode to use `j-agent` for a focused investigation, implementation, or verification task when useful. Each delegate receives the exact J Mode skill path, workspace, task boundary, relevant evidence, and acceptance criteria. It reads the skill and Bug Fix playbook, completes its assigned part, and returns evidence. The parent agent coordinates the workflow, reviews delegated work, and performs final verification.
+For Claude Code, use `/j-mode` with the same requests.
 
-Setup registers the custom agent without changing the host's delegation permissions or settings. J Mode can work directly when delegation is unavailable.
+## Coordinator and Delegates
 
-## Bug Fix Workflow
+[`agents/j-agent.md`](agents/j-agent.md) defines J Mode's shared delegate instructions. Claude Code loads that Markdown definition directly. Codex loads [`agents/j-agent.toml`](agents/j-agent.toml), which tells the delegate to read the shared instructions. Model selection follows the host's inherited settings and any explicit overrides.
 
-1. **Reproduce.** Observe the failure in the affected interface or runtime. Record the expected and actual behavior.
-2. **Find the root cause.** Test hypotheses against runtime evidence until the failure mechanism is established.
-3. **Apply a minimal fix.** Make only the changes supported by the evidence. When a cheap regression test is available, observe it fail before applying the fix.
-4. **Verify.** Repeat the original reproduction in the same environment, run relevant checks, and review the final diff.
-5. **Report.** Explain the defect, root cause, fix, verification results, and any unresolved limitations.
+The main agent selects and sequences the playbooks, prepares assignments, dispatches delegates, checks their reports for the required evidence, and assigns follow-ups for gaps. It may inspect workspace metadata and instructions to prepare those assignments; domain work and final verification are delegated.
+
+Before **every** delegation, the main agent creates a complete, unique Markdown context file at `<project-root>/.cache/j-mode-<run-id>-<agent-id>.md`, using [`skills/j-mode/references/subagent-context.md`](skills/j-mode/references/subagent-context.md). Each worker, retry, and verification task gets its own file, created without overwriting an existing assignment. The assignment contains the original request and later constraints; absolute project, workspace, skill, shared-role, and playbook paths; the bounded task; observed evidence and open hypotheses; source and artifact pointers; dependency reports and decisions; file ownership and edit permissions; environment and check instructions; acceptance criteria; and the required return format. Unknown facts are assigned for discovery rather than guessed.
+
+Resolve the host Git or worktree root from the assigned workspace, not the installed skill's path. If the workspace is inside the J Stack submodule, use its owning superproject. For example, with a host at `/path/to/Core` and J Stack installed at `/path/to/Core/jstack`, assignments belong in `/path/to/Core/.cache/`, such as `/path/to/Core/.cache/j-mode-20261023T040955Z-review.md`. Host task context must not go in `/path/to/Core/jstack/.cache/`. Standalone development of J Stack uses the J Stack repository's own `.cache/`.
+
+Dispatch the registered `j-agent` when available, otherwise a generic delegate that reads the shared role. Use a fresh delegate without inherited conversation when supported. The spawn message only points to the context file's absolute path and tells the delegate to read it fully before working; all substantive instructions must already be in that file. Keep the assignment immutable after dispatch. Delegates execute only their assigned stages and do not spawn further agents. Independent tasks with disjoint ownership may run in parallel; overlapping edits are serialized.
+
+Each delegate appends a **Result** section to its own context file and returns the same essential report to the main agent: context path and assignment ID; completed, blocked, or inconclusive status; findings and decisions; files changed; exact commands or actions and actual results with evidence paths; acceptance criteria outcomes; and remaining uncertainty or dependencies. The main agent collects these reports and delegates review, verification, and any follow-up work through new context files before summarizing the result to the user. An independent verification delegate is assigned when needed; the main agent does not rerun checks itself.
+
+Investigation-only requests keep source code, project data, and external systems read-only. The `.cache/` assignment and result files are the sole bookkeeping exception.
+
+Setup registers the custom agent without changing the host's delegation permissions or settings. If delegation is unavailable or explicitly disallowed, J Mode reports that limitation instead of silently switching to direct execution. The user can explicitly request direct execution.
+
+## Playbooks
+
+| Playbook | Workflow |
+| --- | --- |
+| [Bug Fix](skills/j-mode/playbooks/bug-fix.md) | Reproduce the failure, establish its cause, apply a minimal fix, and verify the original behavior. |
+| [Feature](skills/j-mode/playbooks/feature.md) | Define the outcome, choose the data and interface shape, implement in verifiable units, and check the user-visible result. |
+| [Investigation](skills/j-mode/playbooks/investigate.md) | Trace evidence and answer a question or recommend an approach without changing source code, project data, or external state. |
+| [Refactor](skills/j-mode/playbooks/refactor.md) | Capture the current contract, improve the structure in small steps, and prove behavior is preserved. |
 
 Commits, pull requests, and other delivery actions follow the user's request and the project's existing workflow.
 
@@ -94,7 +115,12 @@ skills/
   j-mode/
     SKILL.md                 # Entry point and engineering rules
     playbooks/
-      bug-fix.md             # The only playbook currently included
+      bug-fix.md             # Reproduce and fix a defect
+      feature.md             # Build new or changed behavior
+      investigate.md         # Answer a question with evidence
+      refactor.md            # Improve structure while preserving behavior
+    references/
+      subagent-context.md    # Per-delegate assignment and result template
 README.md
 setup.sh                     # Configure the host project
 tests/
@@ -104,8 +130,9 @@ tests/
 ## Customize
 
 - Edit [`skills/j-mode/SKILL.md`](skills/j-mode/SKILL.md) to change J Mode's engineering rules.
-- Edit [`skills/j-mode/playbooks/bug-fix.md`](skills/j-mode/playbooks/bug-fix.md) to change the Bug Fix workflow.
+- Edit the files under `skills/j-mode/playbooks/` to change an individual workflow.
 - Edit [`agents/j-agent.md`](agents/j-agent.md) to change the delegate's instructions.
+- Edit [`skills/j-mode/references/subagent-context.md`](skills/j-mode/references/subagent-context.md) to change the complete assignment and result template used before each delegation.
 
 ## Test Setup
 

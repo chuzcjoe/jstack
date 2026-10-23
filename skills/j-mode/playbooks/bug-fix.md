@@ -1,16 +1,14 @@
 # Bug Fix
 
-Adapted from P Stack's Bug Fix playbook for a standalone workflow.
-
 Every change should follow from evidence about the reported failure. A speculative safeguard is a hypothesis to test, rather than an automatic part of the fix.
 
-When delegation is useful, follow J Mode's Subagents section to assign a bounded investigation, implementation, or verification task to `j-agent`. The coordinating agent still owns the original reproduction, review of the fix, and final verification.
+The coordinator delegates this playbook's domain work by default. As an executor, read your assignment in the host project's `.cache` in full, follow J Mode's context and result-handoff protocol, and perform only the assigned stages below. Do not spawn agents; return dependencies or needed follow-ups to the coordinator.
 
 ## 1. Reproduce the failure
 
-Establish the expected behavior and the actual failure. Run the reproduction yourself on the surface where the bug occurs, such as the browser, CLI, API, or application runtime. Record the command or actions, relevant input and environment, and the observed failure.
+Establish the expected behavior and the actual failure. The assigned executor runs the reproduction on the surface where the bug occurs, such as the browser, CLI, API, or application runtime. Record the command or actions, relevant input and environment, and the observed failure for subsequent implementation and verification workers.
 
-For intermittent bugs, tighten conditions or add temporary instrumentation until you can observe the trigger. If access, credentials, or an unavailable environment prevents reproduction, state the specific limit and request only the missing information or access. Continue independent investigation, but keep the reproduction marked unverified.
+For intermittent bugs, tighten conditions or add temporary instrumentation within your edit permissions until you can observe the trigger. If access, credentials, or an unavailable environment prevents reproduction, report the specific limit and missing input or access to the coordinator. Continue independent investigation within your assignment, but keep the reproduction marked unverified.
 
 ## 2. Establish the root cause
 
@@ -28,13 +26,13 @@ When a cheap, deterministic local regression test can express the defect, add it
 
 Rerun the same reproduction with the fix, using the same relevant inputs and environment. Confirm that the expected behavior now occurs, rather than merely that an error disappeared. If a regression test was added, run it again and observe it pass.
 
-Run the relevant nearby checks and inspect the final diff for unintended behavior, temporary instrumentation, and speculative changes. Remove temporary debugging code before the final relevant verification. Investigate a failed check before broadening the test run.
+Run the relevant nearby checks and inspect the final diff for unintended behavior, temporary instrumentation, and speculative changes. Remove temporary debugging code before the final relevant verification. Investigate a failed check before broadening the test run. If review or verification is assigned to a separate worker, provide the reproduction, relevant inputs, and evidence paths needed to repeat it; the coordinator does not run it.
 
 A unit test, build, or different-surface check alone does not close an original runtime reproduction. If the original surface remains inaccessible or inconclusive, report the fix as unverified on that surface and name the remaining check. Do not claim a confirmed runtime fix.
 
 ## 5. Report the result
 
-Reply concisely in the user's language with:
+Append the required `Result` section to your context file and send the same essential result to the coordinator, including:
 
 - What was broken and its user-visible impact.
 - The root cause and the evidence that established it, or the remaining hypothesis if unconfirmed.
@@ -42,4 +40,4 @@ Reply concisely in the user's language with:
 - The reproduction and verification results, including a short actual failing-then-passing output excerpt when available.
 - Any skipped check, unresolved limitation, or remaining step.
 
-Never invent output. Do not open a PR or create commits merely because this playbook finished. If delivery was requested, follow that request and the repository's existing workflow.
+Include the common handoff fields required by J Mode: assignment/context identity, status, files changed, exact actions and actual results, acceptance outcomes, and remaining dependencies. The coordinator uses these reports for the final user response. Never invent output. Do not open a PR or create commits merely because this playbook finished. If delivery was requested and assigned to you, follow that request and the repository's existing workflow.
